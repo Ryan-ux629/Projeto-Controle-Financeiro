@@ -9,6 +9,7 @@ from contextlib import closing
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from typing import Optional
+import uuid
 
 # Configuração de Logs
 logging.basicConfig(level=logging.INFO)
@@ -46,7 +47,8 @@ def init_db():
                         categoria TEXT NOT NULL,
                         data DATE DEFAULT (date('now')),
                         parcela_atual INTEGER DEFAULT 1,
-                        total_parcelas INTEGER DEFAULT 1
+                        total_parcelas INTEGER DEFAULT 1,
+                        agrupamento_id TEXT
                     )
                 ''')
 
@@ -58,6 +60,11 @@ def init_db():
 
                 try:
                     conn.execute("ALTER TABLE gastos ADD COLUMN total_parcelas INTEGER DEFAULT 1")
+                except sqlite3.OperationalError:
+                    pass # Column likely exists
+
+                try:
+                    conn.execute("ALTER TABLE gastos ADD COLUMN agrupamento_id TEXT")
                 except sqlite3.OperationalError:
                     pass # Column likely exists
 
@@ -184,6 +191,8 @@ async def adicionar(
         # If they enter total, they can divide it themselves.
         # So: Value = Installment Value.
 
+        agrupamento_id = str(uuid.uuid4())
+
         with closing(get_db_connection()) as conn:
             with conn:
                 for i in range(parcelas):
@@ -192,8 +201,8 @@ async def adicionar(
                     date_str = future_date.strftime('%Y-%m-%d')
 
                     conn.execute(
-                        "INSERT INTO gastos (descricao, valor, categoria, data, parcela_atual, total_parcelas) VALUES (?, ?, ?, ?, ?, ?)",
-                        (descricao, valor, categoria, date_str, i + 1, parcelas)
+                        "INSERT INTO gastos (descricao, valor, categoria, data, parcela_atual, total_parcelas, agrupamento_id) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                        (descricao, valor, categoria, date_str, i + 1, parcelas, agrupamento_id)
                     )
 
         url = "/"
@@ -222,6 +231,25 @@ async def deletar(
     except Exception as e:
         logger.error(f"Erro ao deletar: {e}")
         raise HTTPException(status_code=500, detail="Erro ao deletar despesa")
+
+@app.post("/deletar_serie/{agrupamento_id}")
+async def deletar_serie(
+    agrupamento_id: str,
+    current_mes: int = Form(None),
+    current_ano: int = Form(None)
+):
+    try:
+        with closing(get_db_connection()) as conn:
+            with conn:
+                conn.execute("DELETE FROM gastos WHERE agrupamento_id = ?", (agrupamento_id,))
+
+        url = "/"
+        if current_mes and current_ano:
+            url = f"/?mes={current_mes}&ano={current_ano}"
+        return RedirectResponse(url=url, status_code=303)
+    except Exception as e:
+        logger.error(f"Erro ao deletar série: {e}")
+        raise HTTPException(status_code=500, detail="Erro ao deletar série de despesas")
 
 if __name__ == "__main__":
     # Roda no servidor local, porta 8000

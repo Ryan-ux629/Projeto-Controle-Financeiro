@@ -13,20 +13,15 @@
 
     <style>
         :root {
-            --primary: #2563eb;       /* Royal Blue */
-            --primary-dark: #1e40af;  /* Darker Blue */
-            --secondary: #64748b;     /* Slate Gray */
-            --success: #10b981;       /* Emerald Green */
-            --danger: #ef4444;        /* Red */
-            --warning: #f59e0b;       /* Amber */
-            --bg-body: #f1f5f9;       /* Slate 100 */
+            --primary: #3b82f6;       /* Soft Blue */
+            --bg-body: #f8fafc;       /* Very Light Slate */
             --bg-card: #ffffff;
-            --text-main: #1e293b;     /* Slate 800 */
-            --text-muted: #64748b;    /* Slate 500 */
+            --text-main: #334155;     /* Slate 700 */
+            --text-muted: #94a3b8;    /* Slate 400 */
             --border: #e2e8f0;        /* Slate 200 */
-            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-            --radius: 0.75rem;
+            --danger: #ef4444;
+            --success: #10b981;
+            --radius: 12px;
         }
 
         body {
@@ -35,404 +30,343 @@
             color: var(--text-main);
             margin: 0;
             padding: 0;
-            line-height: 1.5;
+            line-height: 1.6;
             -webkit-font-smoothing: antialiased;
-        }
-
-        /* Header */
-        header {
-            background-color: var(--bg-card);
-            padding: 1rem 2rem;
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-shadow: var(--shadow-sm);
-            position: sticky;
-            top: 0;
-            z-index: 10;
-        }
-
-        header h1 {
-            margin: 0;
-            font-size: 1.25rem;
-            font-weight: 700;
-            color: var(--primary);
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
         }
 
         /* Dark Mode */
         body.dark-mode {
-            --primary: #60a5fa;       /* Lighter Blue */
-            --primary-dark: #3b82f6;
-            --bg-body: #0f172a;       /* Slate 900 */
-            --bg-card: #1e293b;       /* Slate 800 */
-            --text-main: #f1f5f9;     /* Slate 100 */
-            --text-muted: #94a3b8;    /* Slate 400 */
-            --border: #334155;        /* Slate 700 */
-        }
-
-        body.dark-mode input, body.dark-mode select {
-            background-color: #334155;
-            border-color: #475569;
-            color: #f1f5f9;
-        }
-
-        body.dark-mode input:focus, body.dark-mode select:focus {
-            background-color: #1e293b;
-            border-color: var(--primary);
-        }
-
-        body.dark-mode .btn-nav {
-            background-color: #334155;
-            color: #f1f5f9;
-        }
-
-        body.dark-mode .btn-nav:hover {
-            background-color: #475569;
-        }
-
-        body.dark-mode .categoria-tag {
-            background-color: #334155;
-            color: #cbd5e1;
-        }
-
-        /* Adjust colored tags/text for dark mode visibility */
-        body.dark-mode .cat-Casa { background-color: #0c4a6e; color: #bae6fd; }
-        body.dark-mode .cat-Alimentação { background-color: #064e3b; color: #6ee7b7; }
-        body.dark-mode .cat-Transporte { background-color: #451a03; color: #fde047; }
-        body.dark-mode .cat-Lazer { background-color: #4a044e; color: #f0abfc; }
-        body.dark-mode .cat-Saúde { background-color: #450a0a; color: #fca5a5; }
-        body.dark-mode .cat-Outros { background-color: #334155; color: #cbd5e1; }
-
-        body.dark-mode th {
-            background-color: #334155;
-            color: #cbd5e1;
-        }
-
-        body.dark-mode tr:hover td {
-            background-color: #334155;
+            --primary: #60a5fa;
+            --bg-body: #0f172a;
+            --bg-card: #1e293b;
+            --text-main: #f1f5f9;
+            --text-muted: #94a3b8;
+            --border: #334155;
         }
 
         /* Layout */
         .container {
-            max-width: 1000px;
-            margin: 2rem auto;
-            padding: 0 1.5rem;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem;
         }
 
+        /* Header - Minimalist */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 2rem;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        /* Navigation - Transparent & Clean */
+        .month-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .month-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        .btn-icon {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 1.1rem;
+            padding: 0.5rem;
+            border-radius: 50%;
+            transition: all 0.2s;
+        }
+
+        .btn-icon:hover {
+            color: var(--primary);
+            background-color: var(--bg-card); /* subtle highlight */
+        }
+
+        /* Grid Layout */
         .grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
             gap: 1.5rem;
-            margin-bottom: 1.5rem;
+            margin-bottom: 2rem;
         }
 
-        /* Cards */
+        /* Cards - Minimalist */
         .card {
             background: var(--bg-card);
             padding: 1.5rem;
             border-radius: var(--radius);
-            box-shadow: var(--shadow-sm);
+            /* Very subtle border instead of shadow for clean look */
             border: 1px solid var(--border);
-            transition: transform 0.2s, box-shadow 0.2s;
         }
 
-        .card:hover {
-            box-shadow: var(--shadow-md);
-        }
-
-        .card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1rem;
-            padding-bottom: 0.75rem;
-            border-bottom: 1px solid var(--border);
-        }
-
-        h2 {
-            font-size: 1.1rem;
-            font-weight: 600;
-            color: var(--text-main);
-            margin: 0;
-        }
-
-        /* Dashboard Highlight */
-        .balance-card {
-            text-align: center;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .balance-title {
-            font-size: 0.875rem;
+        /* Balance Stats */
+        .stat-label {
+            font-size: 0.85rem;
             color: var(--text-muted);
+            font-weight: 500;
             text-transform: uppercase;
             letter-spacing: 0.05em;
-            font-weight: 600;
         }
 
-        .balance-value {
-            font-size: 2.5rem;
-            font-weight: 800;
-            color: var(--primary);
-            margin: 0.5rem 0;
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-main);
+            margin: 0.25rem 0;
         }
 
-        .balance-subtitle {
-            font-size: 0.875rem;
-            color: var(--success);
-            background: #d1fae5;
-            padding: 0.25rem 0.75rem;
-            border-radius: 1rem;
-            font-weight: 500;
+        .stat-sub {
+            font-size: 0.85rem;
+            color: var(--text-muted);
         }
 
-        /* Formulário */
-        .form-row {
+        /* Income Edit - Clean */
+        .income-wrapper {
             display: flex;
-            gap: 0.75rem;
-            flex-wrap: wrap;
+            align-items: baseline;
+            gap: 0.5rem;
         }
 
-        .input-group {
-            flex: 1;
-            min-width: 150px;
+        .btn-edit-income {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            cursor: pointer;
+            background: none;
+            border: none;
+            opacity: 0;
+            transition: opacity 0.2s;
         }
 
-        .input-group input, .input-group select {
-            width: 100%;
-            padding: 0.75rem 1rem;
+        .income-wrapper:hover .btn-edit-income {
+            opacity: 1;
+        }
+
+        .income-form {
+            display: none; /* Hidden by default */
+            margin-top: 0.5rem;
+        }
+
+        .income-form.active {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        /* Form Controls - Clean */
+        input, select {
+            background-color: var(--bg-body);
             border: 1px solid var(--border);
-            border-radius: 0.5rem;
-            font-size: 0.95rem;
+            padding: 0.6rem 1rem;
+            border-radius: 8px;
             font-family: inherit;
             color: var(--text-main);
-            background-color: #f8fafc;
-            transition: all 0.2s;
-            box-sizing: border-box; /* Important for padding */
+            width: 100%;
+            box-sizing: border-box;
+            transition: border-color 0.2s;
         }
 
-        .input-group input:focus, .input-group select:focus {
+        input:focus, select:focus {
             outline: none;
             border-color: var(--primary);
-            background-color: #fff;
-            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
         }
 
-        button.btn-add {
-            background-color: var(--primary);
-            color: white;
+        .btn-primary {
+            background-color: var(--text-main); /* Black/Dark Grey button for minimalism */
+            color: var(--bg-card);
             border: none;
-            padding: 0.75rem 1.5rem;
-            border-radius: 0.5rem;
+            padding: 0.6rem 1.2rem;
+            border-radius: 8px;
             font-weight: 600;
             cursor: pointer;
-            transition: background 0.2s, transform 0.1s;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            min-width: 120px;
-            justify-content: center;
+            transition: opacity 0.2s;
         }
 
-        button.btn-add:hover {
-            background-color: var(--primary-dark);
+        .btn-primary:hover {
+            opacity: 0.9;
         }
 
-        button.btn-add:active {
-            transform: translateY(1px);
+        body.dark-mode .btn-primary {
+            background-color: var(--primary);
+            color: white;
         }
 
-        /* Tabela */
-        .table-responsive {
-            overflow-x: auto;
-        }
-
+        /* Table - Clean */
         table {
             width: 100%;
-            border-collapse: separate;
-            border-spacing: 0;
-            margin-top: 0.5rem;
+            border-collapse: collapse;
+            margin-top: 1rem;
         }
 
         th {
             text-align: left;
-            padding: 1rem;
+            padding: 1rem 0.5rem;
             color: var(--text-muted);
             font-weight: 600;
-            font-size: 0.875rem;
-            border-bottom: 2px solid var(--border);
-            background-color: #f8fafc;
+            font-size: 0.85rem;
+            border-bottom: 1px solid var(--border);
         }
 
         td {
-            padding: 1rem;
+            padding: 1rem 0.5rem;
             border-bottom: 1px solid var(--border);
             font-size: 0.95rem;
-            vertical-align: middle;
         }
 
         tr:last-child td {
             border-bottom: none;
         }
 
-        tr:hover td {
-            background-color: #f8fafc;
-        }
-
-        .categoria-tag {
-            background-color: #e2e8f0;
-            padding: 0.25rem 0.75rem;
-            border-radius: 1rem;
+        .cat-tag {
+            display: inline-block;
+            padding: 0.2rem 0.6rem;
+            border-radius: 6px;
             font-size: 0.75rem;
             font-weight: 600;
+            background-color: var(--bg-body);
             color: var(--text-muted);
-            display: inline-block;
         }
 
-        /* Categoria Colors */
-        .cat-Casa { background-color: #e0f2fe; color: #0369a1; }
-        .cat-Alimentação { background-color: #dcfce7; color: #15803d; }
-        .cat-Transporte { background-color: #fef9c3; color: #a16207; }
-        .cat-Lazer { background-color: #fae8ff; color: #a21caf; }
-        .cat-Saúde { background-color: #fee2e2; color: #b91c1c; }
-        .cat-Outros { background-color: #f1f5f9; color: #475569; }
+        /* Modal (Dialog) */
+        dialog {
+            border: none;
+            border-radius: var(--radius);
+            padding: 2rem;
+            background: var(--bg-card);
+            color: var(--text-main);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            max-width: 400px;
+        }
 
-        .btn-del {
+        dialog::backdrop {
+            background: rgba(0,0,0,0.5);
+        }
+
+        .dialog-buttons {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1.5rem;
+            justify-content: flex-end;
+        }
+
+        .btn-danger {
+            background-color: #fee2e2;
+            color: var(--danger);
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .btn-danger:hover {
+            background-color: #fecaca;
+        }
+
+        .btn-ghost {
             background: none;
             border: none;
             color: var(--text-muted);
             cursor: pointer;
-            font-size: 1rem;
-            padding: 0.5rem;
-            border-radius: 0.375rem;
-            transition: all 0.2s;
         }
 
-        .btn-del:hover {
-            color: var(--danger);
-            background-color: #fee2e2;
-        }
-
-        .empty-state {
-            text-align: center;
-            padding: 2rem;
+        .installment-badge {
+            font-size: 0.7rem;
+            background-color: var(--bg-body);
             color: var(--text-muted);
-        }
-
-        .month-nav {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1.5rem;
-            background: var(--bg-card);
-            padding: 1rem;
-            border-radius: var(--radius);
-            box-shadow: var(--shadow-sm);
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin-left: 6px;
             border: 1px solid var(--border);
-        }
-
-        .btn-nav {
-            text-decoration: none;
-            color: var(--primary);
-            font-weight: 600;
-            padding: 0.5rem 1rem;
-            border-radius: 0.5rem;
-            background-color: #f1f5f9;
-            transition: background 0.2s;
-        }
-
-        .btn-nav:hover {
-            background-color: #e2e8f0;
-        }
-
-        @media (max-width: 768px) {
-            .grid { grid-template-columns: 1fr; }
-            .form-row { flex-direction: column; }
-            header { padding: 1rem; }
-            .container { padding: 0 1rem; }
         }
     </style>
 </head>
 <body>
 
-<header>
-    <h1><i class="fas fa-wallet"></i> Finanças Pessoais</h1>
-    <button onclick="toggleDarkMode()" style="background:none; border:none; cursor:pointer; font-size:1.2rem; color:var(--text-main);" title="Alternar Tema">
-        <i id="theme-icon" class="fas fa-moon"></i>
-    </button>
-</header>
-
 <div class="container">
+    <header>
+        <h1><i class="fas fa-wallet" style="color: var(--primary);"></i> Finanças</h1>
+        <button class="btn-icon" onclick="toggleDarkMode()" title="Alternar Tema">
+            <i id="theme-icon" class="fas fa-moon"></i>
+        </button>
+    </header>
 
-    <!-- Month Navigation -->
+    <!-- Navigation -->
     <div class="month-nav">
-        <a href="/?mes={{ prev_mes }}&ano={{ prev_ano }}" class="btn-nav"><i class="fas fa-chevron-left"></i> Anterior</a>
-        <h2 style="margin: 0; font-size: 1.5rem; color: var(--primary);">{{ mes_nome }} {{ current_ano }}</h2>
-        <a href="/?mes={{ next_mes }}&ano={{ next_ano }}" class="btn-nav">Próximo <i class="fas fa-chevron-right"></i></a>
+        <a href="/?mes={{ prev_mes }}&ano={{ prev_ano }}" class="btn-icon"><i class="fas fa-chevron-left"></i></a>
+        <div class="month-title">{{ mes_nome }} {{ current_ano }}</div>
+        <a href="/?mes={{ next_mes }}&ano={{ next_ano }}" class="btn-icon"><i class="fas fa-chevron-right"></i></a>
     </div>
 
-    <!-- Summary Stats -->
-    <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));">
-        <!-- Income Card -->
-        <div class="card balance-card">
-            <span class="balance-title">Renda Mensal</span>
-            <div class="balance-value" style="color: var(--success); font-size: 2rem;">R$ {{ "%.2f"|format(renda_mensal) }}</div>
-            <form action="/definir_renda" method="post" style="margin-top: 10px; display: flex; gap: 5px; width: 100%; justify-content: center;">
-                 <input type="number" step="0.01" name="renda" placeholder="Definir Renda" required style="padding: 6px; border: 1px solid var(--border); border-radius: 4px; font-size: 0.85rem; width: 100px;">
-                 <input type="hidden" name="current_mes" value="{{ current_mes }}">
-                 <input type="hidden" name="current_ano" value="{{ current_ano }}">
-                 <button type="submit" style="padding: 6px 12px; font-size: 0.85rem; background: var(--secondary); color: white; border: none; border-radius: 4px; cursor: pointer;">OK</button>
+    <!-- Stats Grid -->
+    <div class="grid">
+        <!-- Income -->
+        <div class="card">
+            <div class="stat-label">Renda Mensal</div>
+            <div class="income-wrapper">
+                <div class="stat-value" style="color: var(--success);">R$ {{ "%.2f"|format(renda_mensal) }}</div>
+                <button class="btn-edit-income" onclick="toggleIncomeForm()"><i class="fas fa-pen"></i></button>
+            </div>
+
+            <form action="/definir_renda" method="post" class="income-form" id="incomeForm">
+                <input type="number" step="0.01" name="renda" placeholder="Nova Renda" required>
+                <input type="hidden" name="current_mes" value="{{ current_mes }}">
+                <input type="hidden" name="current_ano" value="{{ current_ano }}">
+                <button type="submit" class="btn-primary" style="padding: 0.6rem;">OK</button>
             </form>
         </div>
 
-        <!-- Expense Card -->
-        <div class="card balance-card">
-            <span class="balance-title">Total Gasto</span>
-            <div class="balance-value" style="color: var(--danger);">R$ {{ "%.2f"|format(total_geral) }}</div>
-            <div class="balance-subtitle" style="background-color: #fee2e2; color: var(--danger);">{{ gastos|length }} despesas</div>
+        <!-- Expense -->
+        <div class="card">
+            <div class="stat-label">Total Gasto</div>
+            <div class="stat-value" style="color: var(--danger);">R$ {{ "%.2f"|format(total_geral) }}</div>
+            <div class="stat-sub">{{ gastos|length }} despesas este mês</div>
         </div>
 
-        <!-- Estimated Balance Card -->
-        <div class="card balance-card">
-            <span class="balance-title">Saldo Estimado</span>
-            <div class="balance-value" style="color: {% if saldo_estimado >= 0 %}var(--success){% else %}var(--danger){% endif %};">
+        <!-- Balance -->
+        <div class="card">
+            <div class="stat-label">Saldo Estimado</div>
+            <div class="stat-value" style="color: {% if saldo_estimado >= 0 %}var(--success){% else %}var(--danger){% endif %};">
                 R$ {{ "%.2f"|format(saldo_estimado) }}
             </div>
-            <div class="balance-subtitle" style="{% if saldo_estimado < 0 %}background-color: #fee2e2; color: var(--danger);{% endif %}">
+            <div class="stat-sub">
                 {% if saldo_estimado >= 0 %}Sobrando{% else %}Faltando{% endif %}
             </div>
         </div>
     </div>
 
-    <!-- Chart Card (Full Width) -->
-    <div class="card" style="margin-bottom: 1.5rem;">
-        <div class="card-header" style="border:none; padding:0; margin-bottom: 0.5rem;">
-            <h2>Distribuição de Gastos</h2>
-        </div>
-        <div style="height: 250px; position: relative;">
+    <!-- Chart -->
+    <div class="card" style="margin-bottom: 2rem;">
+        <div style="height: 200px; position: relative;">
             <canvas id="expensesChart"></canvas>
         </div>
     </div>
 
-    <!-- Add Expense Form -->
-    <div class="card">
-        <div class="card-header">
-            <h2><i class="fas fa-plus-circle" style="color: var(--primary); margin-right: 8px;"></i>Adicionar Nova Despesa</h2>
-        </div>
-        <form action="/adicionar" method="post" class="form-row">
-            <div class="input-group" style="flex: 2;">
-                <input type="text" name="descricao" placeholder="Descrição da despesa" required>
-            </div>
-            <div class="input-group">
+    <!-- Main Content: Add Form & List -->
+    <div class="grid" style="grid-template-columns: 1fr 2fr; align-items: start;">
+
+        <!-- Add Form -->
+        <div class="card">
+            <h3 style="margin-top: 0; font-size: 1rem; color: var(--text-main);">Nova Despesa</h3>
+            <form action="/adicionar" method="post" style="display: flex; flex-direction: column; gap: 1rem;">
+                <input type="text" name="descricao" placeholder="Descrição" required>
                 <select name="categoria">
-                    <option value="Outros">Selecione uma Categoria</option>
+                    <option value="Outros">Categoria...</option>
                     <option value="Casa">Casa</option>
                     <option value="Alimentação">Alimentação</option>
                     <option value="Transporte">Transporte</option>
@@ -440,64 +374,50 @@
                     <option value="Saúde">Saúde</option>
                     <option value="Outros">Outros</option>
                 </select>
-            </div>
-            <div class="input-group">
-                <input type="number" step="0.01" name="valor" placeholder="Valor (R$)" required>
-            </div>
-            <div class="input-group" style="flex: 0.5; min-width: 80px;">
-                <input type="number" name="parcelas" placeholder="Parc." min="1" value="1" required title="Número de parcelas">
-            </div>
-            <input type="hidden" name="current_mes" value="{{ current_mes }}">
-            <input type="hidden" name="current_ano" value="{{ current_ano }}">
-            <button type="submit" class="btn-add">Adicionar</button>
-        </form>
-    </div>
-
-    <!-- Recent History -->
-    <div class="card" style="margin-top: 20px;">
-        <div class="card-header">
-            <h2><i class="fas fa-history" style="color: var(--secondary); margin-right: 8px;"></i>Histórico Recente</h2>
+                <div style="display: flex; gap: 0.5rem;">
+                    <input type="number" step="0.01" name="valor" placeholder="R$ Valor" required style="flex: 2;">
+                    <input type="number" name="parcelas" placeholder="x1" min="1" value="1" title="Parcelas" style="flex: 1;">
+                </div>
+                <input type="hidden" name="current_mes" value="{{ current_mes }}">
+                <input type="hidden" name="current_ano" value="{{ current_ano }}">
+                <button type="submit" class="btn-primary">Adicionar</button>
+            </form>
         </div>
 
-        <div class="table-responsive">
-            <table>
+        <!-- Expense List -->
+        <div class="card" style="min-height: 300px;">
+            <table style="margin-top: 0;">
                 <thead>
                     <tr>
                         <th>Descrição</th>
                         <th>Categoria</th>
                         <th>Valor</th>
-                        <th style="text-align: right;">Ação</th>
+                        <th></th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for gasto in gastos %}
                     <tr>
                         <td>
-                            <div style="font-weight: 500;">{{ gasto.descricao }}</div>
-                            <div style="font-size: 0.75rem; color: var(--text-muted);">
-                                {{ gasto.data }}
-                                {% if gasto.total_parcelas > 1 %}
-                                <span style="margin-left: 5px; background-color: #e0f2fe; color: #0284c7; padding: 1px 6px; border-radius: 4px; font-weight: 600;">{{ gasto.parcela_atual }}x{{ gasto.total_parcelas }}</span>
-                                {% endif %}
-                            </div>
+                            {{ gasto.descricao }}
+                            {% if gasto.total_parcelas > 1 %}
+                            <span class="installment-badge">{{ gasto.parcela_atual }}/{{ gasto.total_parcelas }}</span>
+                            {% endif %}
+                            <div style="font-size: 0.75rem; color: var(--text-muted);">{{ gasto.data }}</div>
                         </td>
-                        <td><span class="categoria-tag cat-{{ gasto.categoria }}">{{ gasto.categoria }}</span></td>
-                        <td style="font-weight: 600; color: var(--text-main);">R$ {{ "%.2f"|format(gasto.valor) }}</td>
+                        <td><span class="cat-tag">{{ gasto.categoria }}</span></td>
+                        <td style="font-weight: 600;">R$ {{ "%.2f"|format(gasto.valor) }}</td>
                         <td style="text-align: right;">
-                            <form action="/deletar/{{ gasto.id }}" method="post" style="display:inline;" onsubmit="return confirm('Tem certeza que deseja excluir esta despesa?');">
-                                <input type="hidden" name="current_mes" value="{{ current_mes }}">
-                                <input type="hidden" name="current_ano" value="{{ current_ano }}">
-                                <button type="submit" class="btn-del" title="Excluir">
-                                    <i class="fas fa-trash-alt"></i>
-                                </button>
-                            </form>
+                            <button class="btn-icon" style="color: var(--text-muted); font-size: 0.9rem;"
+                                    onclick="confirmDelete('{{ gasto.id }}', '{{ gasto.agrupamento_id }}', {{ gasto.total_parcelas }}, '{{ gasto.descricao }}')">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
                         </td>
                     </tr>
                     {% else %}
                     <tr>
-                        <td colspan="4" class="empty-state">
-                            <i class="fas fa-inbox" style="font-size: 2rem; margin-bottom: 10px; display: block;"></i>
-                            Nenhuma despesa registrada ainda.
+                        <td colspan="4" style="text-align: center; padding: 2rem; color: var(--text-muted);">
+                            Sem despesas este mês.
                         </td>
                     </tr>
                     {% endfor %}
@@ -507,8 +427,36 @@
     </div>
 </div>
 
+<!-- Delete Modal -->
+<dialog id="deleteModal">
+    <h3 style="margin-top: 0;">Excluir Despesa</h3>
+    <p>Deseja excluir <b id="delDesc"></b>?</p>
+
+    <div id="seriesOption" style="display: none; background-color: var(--bg-body); padding: 10px; border-radius: 8px; margin-bottom: 10px;">
+        <p style="font-size: 0.9rem; margin: 0 0 10px 0; color: var(--text-muted);">Esta despesa faz parte de uma série parcelada.</p>
+        <button class="btn-danger" style="width: 100%; margin-bottom: 5px;" onclick="submitDeleteSeries()">Excluir TODAS as parcelas</button>
+        <button class="btn-ghost" style="width: 100%; font-size: 0.85rem;" onclick="submitDeleteSingle()">Excluir apenas ESTA</button>
+    </div>
+
+    <div class="dialog-buttons" id="singleOption">
+        <button class="btn-ghost" onclick="closeModal()">Cancelar</button>
+        <button class="btn-danger" onclick="submitDeleteSingle()">Excluir</button>
+    </div>
+</dialog>
+
+<!-- Hidden Forms for Delete -->
+<form id="formDeleteSingle" action="" method="post">
+    <input type="hidden" name="current_mes" value="{{ current_mes }}">
+    <input type="hidden" name="current_ano" value="{{ current_ano }}">
+</form>
+
+<form id="formDeleteSeries" action="" method="post">
+    <input type="hidden" name="current_mes" value="{{ current_mes }}">
+    <input type="hidden" name="current_ano" value="{{ current_ano }}">
+</form>
+
 <script>
-    // Dark Mode Logic
+    // --- Dark Mode ---
     function toggleDarkMode() {
         document.body.classList.toggle('dark-mode');
         const isDark = document.body.classList.contains('dark-mode');
@@ -520,32 +468,107 @@
     function updateIcon() {
         const isDark = document.body.classList.contains('dark-mode');
         const icon = document.getElementById('theme-icon');
-        if (isDark) {
-            icon.classList.remove('fa-moon');
-            icon.classList.add('fa-sun');
-        } else {
-            icon.classList.remove('fa-sun');
-            icon.classList.add('fa-moon');
-        }
+        icon.className = isDark ? 'fas fa-sun' : 'fas fa-moon';
     }
 
-    // Init Theme
     if (localStorage.getItem('darkMode') === 'true') {
         document.body.classList.add('dark-mode');
     }
-    // Run immediately to set icon state
     updateIcon();
 
-    const ctx = document.getElementById('expensesChart').getContext('2d');
+    // --- Income Toggle ---
+    function toggleIncomeForm() {
+        document.getElementById('incomeForm').classList.toggle('active');
+    }
 
-    // Custom Colors
+    // --- Delete Logic ---
+    const modal = document.getElementById('deleteModal');
+    let currentId = null;
+    let currentGroupId = null;
+
+    function confirmDelete(id, groupId, totalParcelas, descricao) {
+        currentId = id;
+        currentGroupId = groupId;
+        document.getElementById('delDesc').innerText = descricao;
+
+        const seriesOpt = document.getElementById('seriesOption');
+        const singleOpt = document.getElementById('singleOption');
+
+        if (totalParcelas > 1 && groupId && groupId !== 'None') {
+            seriesOpt.style.display = 'block';
+            singleOpt.style.display = 'none';
+
+            // Re-render buttons for cleaner logic inside the block
+            seriesOpt.innerHTML = `
+                <p style="font-size: 0.9rem; margin: 0 0 10px 0; color: var(--text-muted);">Esta despesa faz parte de uma série parcelada.</p>
+                <button class="btn-danger" style="width: 100%; margin-bottom: 5px;" onclick="submitDeleteSeries('${groupId}')">Excluir TODAS as parcelas</button>
+                <button class="btn-ghost" style="width: 100%; font-size: 0.85rem;" onclick="submitDeleteSingle('${id}')">Excluir apenas ESTA</button>
+                <button class="btn-ghost" style="width: 100%; margin-top: 5px;" onclick="closeModal()">Cancelar</button>
+            `;
+        } else {
+            seriesOpt.style.display = 'none';
+            singleOpt.style.display = 'flex';
+            // Setup single delete action
+            const singleBtn = document.getElementById('btnDeleteSingle');
+            singleBtn.onclick = function() { submitDeleteSingle(id); };
+        }
+
+        modal.showModal();
+    }
+
+    function closeModal() {
+        modal.close();
+    }
+
+    function submitDeleteSingle(id) {
+        // Create a form dynamically to submit POST request
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/deletar/${id}`;
+
+        // Add current view context
+        const mesInput = document.createElement('input');
+        mesInput.type = 'hidden';
+        mesInput.name = 'current_mes';
+        mesInput.value = '{{ current_mes }}';
+        form.appendChild(mesInput);
+
+        const anoInput = document.createElement('input');
+        anoInput.type = 'hidden';
+        anoInput.name = 'current_ano';
+        anoInput.value = '{{ current_ano }}';
+        form.appendChild(anoInput);
+
+        document.body.appendChild(form);
+        form.submit();
+    }
+
+    function submitDeleteSeries(groupId) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/deletar_serie/${groupId}`;
+
+        const mesInput = document.createElement('input');
+        mesInput.type = 'hidden';
+        mesInput.name = 'current_mes';
+        mesInput.value = '{{ current_mes }}';
+        form.appendChild(mesInput);
+
+        const anoInput = document.createElement('input');
+        anoInput.type = 'hidden';
+        anoInput.name = 'current_ano';
+        anoInput.value = '{{ current_ano }}';
+        form.appendChild(anoInput);
+
+        document.body.appendChild(form);
+        form.submit();
+    }
+
+    // --- Chart ---
+    const ctx = document.getElementById('expensesChart').getContext('2d');
     const colors = {
-        'Casa': '#3b82f6',        // Blue
-        'Alimentação': '#10b981', // Emerald
-        'Transporte': '#f59e0b',  // Amber
-        'Lazer': '#a855f7',       // Purple
-        'Saúde': '#ef4444',       // Red
-        'Outros': '#64748b'       // Slate
+        'Casa': '#3b82f6', 'Alimentação': '#10b981', 'Transporte': '#f59e0b',
+        'Lazer': '#a855f7', 'Saúde': '#ef4444', 'Outros': '#64748b'
     };
 
     const labels = {{ labels | tojson }};
@@ -559,42 +582,21 @@
             datasets: [{
                 data: data,
                 backgroundColor: bgColors,
-                borderWidth: 2,
-                borderColor: '#ffffff',
-                hoverOffset: 4
+                borderWidth: 0,
+                hoverOffset: 10
             }]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            cutout: '70%',
+            cutout: '75%',
             plugins: {
                 legend: {
                     position: 'right',
                     labels: {
-                        boxWidth: 12,
-                        font: { family: "'Inter', sans-serif", size: 12 },
-                        padding: 15,
-                        usePointStyle: true,
-                        pointStyle: 'circle'
-                    }
-                },
-                tooltip: {
-                    backgroundColor: '#1e293b',
-                    padding: 12,
-                    titleFont: { family: "'Inter', sans-serif", size: 13 },
-                    bodyFont: { family: "'Inter', sans-serif", size: 13 },
-                    cornerRadius: 8,
-                    displayColors: false,
-                    callbacks: {
-                        label: function(context) {
-                            let label = context.label || '';
-                            if (label) { label += ': '; }
-                            if (context.parsed !== null) {
-                                label += new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(context.parsed);
-                            }
-                            return label;
-                        }
+                        boxWidth: 8,
+                        font: { family: "'Inter', sans-serif", size: 11 },
+                        usePointStyle: true
                     }
                 }
             }
@@ -602,16 +604,13 @@
     });
 
     function updateChartTheme() {
+        // Minimalist chart doesn't need much border update, but legend color matters
         const isDark = document.body.classList.contains('dark-mode');
         if (chart) {
-            chart.data.datasets[0].borderColor = isDark ? '#1e293b' : '#ffffff';
-            // Also update legend text color
-            chart.options.plugins.legend.labels.color = isDark ? '#f1f5f9' : '#666';
+            chart.options.plugins.legend.labels.color = isDark ? '#f1f5f9' : '#334155';
             chart.update();
         }
     }
-
-    // Call once on init to match loaded state
     updateChartTheme();
 </script>
 
