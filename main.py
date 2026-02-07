@@ -70,11 +70,20 @@ def init_db():
 
                 conn.execute('''
                     CREATE TABLE IF NOT EXISTS renda (
-                        id INTEGER PRIMARY KEY,
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        descricao TEXT,
                         valor REAL NOT NULL DEFAULT 0.0
                     )
                 ''')
-                conn.execute("INSERT OR IGNORE INTO renda (id, valor) VALUES (1, 0.0)")
+
+                # Check for new column in existing DB (if migrating)
+                try:
+                    conn.execute("ALTER TABLE renda ADD COLUMN descricao TEXT")
+                except sqlite3.OperationalError:
+                    pass
+
+                # Remove the default single row assumption if it exists and has no description?
+                # For now, we will just start inserting new rows.
     except Exception as e:
         logger.error(f"Erro ao inicializar banco de dados: {e}")
 
@@ -104,8 +113,9 @@ async def home(request: Request, mes: Optional[int] = Query(None), ano: Optional
                 (target_month_str,)
             ).fetchall()
 
-            renda_row = conn.execute("SELECT valor FROM renda WHERE id = 1").fetchone()
-            renda_mensal = renda_row['valor'] if renda_row else 0.0
+            # Fetch all income sources
+            rendas = conn.execute("SELECT * FROM renda").fetchall()
+            renda_mensal = sum(r['valor'] for r in rendas)
 
         labels = [row['categoria'] for row in categorias_db]
         data = [row['total'] for row in categorias_db]
@@ -124,6 +134,7 @@ async def home(request: Request, mes: Optional[int] = Query(None), ano: Optional
         return templates.TemplateResponse("index.html", {
             "request": request,
             "gastos": gastos,
+            "rendas": rendas,
             "labels": labels,
             "data": data,
             "total_geral": total_geral,
@@ -141,24 +152,44 @@ async def home(request: Request, mes: Optional[int] = Query(None), ano: Optional
         logger.error(f"Erro na home: {e}")
         return HTMLResponse(content="<h1>Erro interno</h1>", status_code=500)
 
-@app.post("/definir_renda")
-async def definir_renda(
-    renda: float = Form(...),
+@app.post("/adicionar_renda")
+async def adicionar_renda(
+    valor: float = Form(...),
+    descricao: str = Form("Renda Extra"),
     current_mes: int = Form(None),
     current_ano: int = Form(None)
 ):
     try:
         with closing(get_db_connection()) as conn:
             with conn:
-                conn.execute("UPDATE renda SET valor = ? WHERE id = 1", (renda,))
+                conn.execute("INSERT INTO renda (descricao, valor) VALUES (?, ?)", (descricao, valor))
 
         url = "/"
         if current_mes and current_ano:
             url = f"/?mes={current_mes}&ano={current_ano}"
         return RedirectResponse(url=url, status_code=303)
     except Exception as e:
-        logger.error(f"Erro ao definir renda: {e}")
-        raise HTTPException(status_code=500, detail="Erro ao definir renda")
+        logger.error(f"Erro ao adicionar renda: {e}")
+        raise HTTPException(status_code=500, detail="Erro ao adicionar renda")
+
+@app.post("/deletar_renda/{id}")
+async def deletar_renda(
+    id: int,
+    current_mes: int = Form(None),
+    current_ano: int = Form(None)
+):
+    try:
+        with closing(get_db_connection()) as conn:
+            with conn:
+                conn.execute("DELETE FROM renda WHERE id = ?", (id,))
+
+        url = "/"
+        if current_mes and current_ano:
+            url = f"/?mes={current_mes}&ano={current_ano}"
+        return RedirectResponse(url=url, status_code=303)
+    except Exception as e:
+        logger.error(f"Erro ao deletar renda: {e}")
+        raise HTTPException(status_code=500, detail="Erro ao deletar renda")
 
 @app.post("/adicionar")
 async def adicionar(

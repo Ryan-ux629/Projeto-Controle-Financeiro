@@ -294,6 +294,48 @@
             margin-left: 6px;
             border: 1px solid var(--border);
         }
+
+        /* Hide spinners */
+        input[type=number]::-webkit-inner-spin-button,
+        input[type=number]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        input[type=number] {
+            -moz-appearance: textfield;
+        }
+
+        /* Income List Styling */
+        .income-list {
+            margin-top: 10px;
+            font-size: 0.9rem;
+            border-top: 1px solid var(--border);
+            padding-top: 10px;
+        }
+        .income-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 4px 0;
+            border-bottom: 1px dashed var(--border);
+        }
+        .income-item:last-child {
+            border-bottom: none;
+        }
+        .income-item span {
+            color: var(--text-muted);
+        }
+        .btn-del-income {
+            background: none;
+            border: none;
+            color: var(--danger);
+            cursor: pointer;
+            font-size: 0.8rem;
+            opacity: 0.6;
+        }
+        .btn-del-income:hover {
+            opacity: 1;
+        }
     </style>
 </head>
 <body>
@@ -317,18 +359,41 @@
     <div class="grid">
         <!-- Income -->
         <div class="card">
-            <div class="stat-label">Renda Mensal</div>
+            <div class="stat-label">Renda Mensal (Total)</div>
             <div class="income-wrapper">
                 <div class="stat-value" style="color: var(--success);">R$ {{ "%.2f"|format(renda_mensal) }}</div>
-                <button class="btn-edit-income" onclick="toggleIncomeForm()"><i class="fas fa-pen"></i></button>
+                <button class="btn-edit-income" onclick="toggleIncomeForm()" title="Gerenciar Renda"><i class="fas fa-plus-circle"></i></button>
             </div>
 
-            <form action="/definir_renda" method="post" class="income-form" id="incomeForm">
-                <input type="number" step="0.01" name="renda" placeholder="Nova Renda" required>
+            <!-- Hidden section to Add Income -->
+            <form action="/adicionar_renda" method="post" class="income-form" id="incomeForm" style="flex-direction: column;">
+                <div style="display: flex; gap: 5px;">
+                    <input type="text" name="descricao" placeholder="Fonte (ex: Salário)" required style="flex: 1;">
+                    <input type="number" step="0.01" name="valor" placeholder="R$" min="0" required style="width: 80px;">
+                </div>
                 <input type="hidden" name="current_mes" value="{{ current_mes }}">
                 <input type="hidden" name="current_ano" value="{{ current_ano }}">
-                <button type="submit" class="btn-primary" style="padding: 0.6rem;">OK</button>
+                <button type="submit" class="btn-primary" style="padding: 0.4rem; font-size: 0.8rem; width: 100%;">Adicionar Fonte</button>
             </form>
+
+            <!-- List of Incomes -->
+            {% if rendas %}
+            <div class="income-list">
+                {% for renda in rendas %}
+                <div class="income-item">
+                    <span>{{ renda.descricao or "Renda" }}</span>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <span style="color: var(--text-main); font-weight: 500;">R$ {{ "%.2f"|format(renda.valor) }}</span>
+                        <form action="/deletar_renda/{{ renda.id }}" method="post" style="display: inline;">
+                            <input type="hidden" name="current_mes" value="{{ current_mes }}">
+                            <input type="hidden" name="current_ano" value="{{ current_ano }}">
+                            <button type="submit" class="btn-del-income" title="Remover">&times;</button>
+                        </form>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
         </div>
 
         <!-- Expense -->
@@ -375,7 +440,7 @@
                     <option value="Outros">Outros</option>
                 </select>
                 <div style="display: flex; gap: 0.5rem;">
-                    <input type="number" step="0.01" name="valor" placeholder="R$ Valor" required style="flex: 2;">
+                    <input type="number" step="0.01" name="valor" placeholder="R$ Valor" min="0" required style="flex: 2;">
                     <input type="number" name="parcelas" placeholder="x1" min="1" value="1" title="Parcelas" style="flex: 1;">
                 </div>
                 <input type="hidden" name="current_mes" value="{{ current_mes }}">
@@ -508,12 +573,14 @@
         } else {
             seriesOpt.style.display = 'none';
             singleOpt.style.display = 'flex';
-            // Setup single delete action
-            const singleBtn = document.getElementById('btnDeleteSingle');
-            singleBtn.onclick = function() { submitDeleteSingle(id); };
         }
 
-        modal.showModal();
+        modal.showModal(); // Actually show the modal
+
+        // Polyfill for non-supporting browsers if needed, or just standard
+        if (!modal.showModal) {
+             modal.setAttribute('open', 'true');
+        }
     }
 
     function closeModal() {
@@ -521,10 +588,13 @@
     }
 
     function submitDeleteSingle(id) {
+        const targetId = id || currentId;
+        if (!targetId) return;
+
         // Create a form dynamically to submit POST request
         const form = document.createElement('form');
         form.method = 'POST';
-        form.action = `/deletar/${id}`;
+        form.action = `/deletar/${targetId}`;
 
         // Add current view context
         const mesInput = document.createElement('input');
