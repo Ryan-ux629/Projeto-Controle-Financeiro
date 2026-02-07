@@ -131,8 +131,15 @@ async def home(request: Request, mes: Optional[int] = Query(None), ano: Optional
                  "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"]
         mes_nome = meses[current_mes]
 
+        # Determine default date for the form
+        if current_mes == today.month and current_ano == today.year:
+            default_date = today.strftime('%Y-%m-%d')
+        else:
+            default_date = f"{current_ano}-{current_mes:02d}-01"
+
         return templates.TemplateResponse("index.html", {
             "request": request,
+            "default_date": default_date,
             "gastos": gastos,
             "rendas": rendas,
             "labels": labels,
@@ -196,18 +203,14 @@ async def adicionar(
     descricao: str = Form(...),
     valor: float = Form(...),
     categoria: str = Form(...),
+    data: str = Form(...),
     parcelas: int = Form(1),
     current_mes: int = Form(None),
     current_ano: int = Form(None)
 ):
     try:
-        # Use current view date as start date if provided, or today?
-        # Usually installments start "now". But if I'm viewing "March" and add an expense, maybe I want it in March?
-        # Standard behavior: Add expense implies transaction happens *today* unless a date is picked.
-        # Let's stick to "starts today".
-        start_date = datetime.now().date()
-        # If user wants to start in future, we'd need a date picker.
-        # For now, start_date is TODAY.
+        # Parse the provided date
+        start_date = datetime.strptime(data, '%Y-%m-%d').date()
 
         # Installment logic
         # If parcelas > 1, the value is usually per installment. Or total?
