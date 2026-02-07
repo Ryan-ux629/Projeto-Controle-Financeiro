@@ -442,7 +442,11 @@
                 </select>
                 <div style="display: flex; gap: 0.5rem;">
                     <input type="number" step="0.01" name="valor" placeholder="R$ Valor" min="0" required style="flex: 2;">
-                    <input type="number" name="parcelas" placeholder="x1" min="1" value="1" title="Parcelas" style="flex: 1;">
+                    <input type="number" id="inputParcelas" name="parcelas" placeholder="x1" min="1" value="1" title="Parcelas" style="flex: 1;">
+                </div>
+                <div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; color: var(--text-main);">
+                    <input type="checkbox" id="checkFixo" name="is_fixo" value="true" onchange="toggleParcelas()">
+                    <label for="checkFixo" style="cursor: pointer;">Fixo / Assinatura Mensal</label>
                 </div>
                 <input type="hidden" name="current_mes" value="{{ current_mes }}">
                 <input type="hidden" name="current_ano" value="{{ current_ano }}">
@@ -469,13 +473,16 @@
                             {% if gasto.total_parcelas > 1 %}
                             <span class="installment-badge">{{ gasto.parcela_atual }}/{{ gasto.total_parcelas }}</span>
                             {% endif %}
+                            {% if gasto.assinatura_id %}
+                            <i class="fas fa-sync-alt" style="font-size: 0.7rem; color: var(--primary); margin-left: 5px;" title="Assinatura Mensal"></i>
+                            {% endif %}
                             <div style="font-size: 0.75rem; color: var(--text-muted);">{{ gasto.data }}</div>
                         </td>
                         <td><span class="cat-tag">{{ gasto.categoria }}</span></td>
                         <td style="font-weight: 600;">R$ {{ "%.2f"|format(gasto.valor) }}</td>
                         <td style="text-align: right;">
                             <button class="btn-icon" style="color: var(--text-muted); font-size: 0.9rem;"
-                                    onclick="confirmDelete('{{ gasto.id }}', '{{ gasto.agrupamento_id }}', {{ gasto.total_parcelas }}, '{{ gasto.descricao }}')">
+                                    onclick="confirmDelete('{{ gasto.id }}', '{{ gasto.agrupamento_id }}', {{ gasto.total_parcelas }}, '{{ gasto.descricao }}', '{{ gasto.assinatura_id }}')">
                                 <i class="fas fa-trash-alt"></i>
                             </button>
                         </td>
@@ -499,8 +506,8 @@
     <p>Deseja excluir <b id="delDesc"></b>?</p>
 
     <div id="seriesOption" style="display: none; background-color: var(--bg-body); padding: 10px; border-radius: 8px; margin-bottom: 10px;">
-        <p style="font-size: 0.9rem; margin: 0 0 10px 0; color: var(--text-muted);">Esta despesa faz parte de uma série parcelada.</p>
-        <button class="btn-danger" style="width: 100%; margin-bottom: 5px;" onclick="submitDeleteSeries()">Excluir TODAS as parcelas</button>
+        <p id="seriesText" style="font-size: 0.9rem; margin: 0 0 10px 0; color: var(--text-muted);">Esta despesa faz parte de uma série.</p>
+        <button id="btnDeleteAll" class="btn-danger" style="width: 100%; margin-bottom: 5px;" onclick="submitDeleteSeries()">Excluir TODAS</button>
         <button class="btn-ghost" style="width: 100%; font-size: 0.85rem;" onclick="submitDeleteSingle()">Excluir apenas ESTA</button>
     </div>
 
@@ -522,6 +529,16 @@
 </form>
 
 <script>
+    function toggleParcelas() {
+        const isFixo = document.getElementById('checkFixo').checked;
+        const inputParcelas = document.getElementById('inputParcelas');
+        if (isFixo) {
+            inputParcelas.value = 1;
+            inputParcelas.disabled = true;
+        } else {
+            inputParcelas.disabled = false;
+        }
+    }
     // --- Dark Mode ---
     function toggleDarkMode() {
         document.body.classList.toggle('dark-mode');
@@ -551,32 +568,49 @@
     const modal = document.getElementById('deleteModal');
     let currentId = null;
     let currentGroupId = null;
+    let currentAssinaturaId = null;
 
-    function confirmDelete(id, groupId, totalParcelas, descricao) {
+    function confirmDelete(id, groupId, totalParcelas, descricao, assinaturaId) {
         currentId = id;
         currentGroupId = groupId;
+        currentAssinaturaId = assinaturaId;
         document.getElementById('delDesc').innerText = descricao;
 
         const seriesOpt = document.getElementById('seriesOption');
         const singleOpt = document.getElementById('singleOption');
 
-        if (totalParcelas > 1 && groupId && groupId !== 'None') {
+        // Check if it is Installment OR Subscription
+        if ((totalParcelas > 1 && groupId && groupId !== 'None') || (assinaturaId && assinaturaId !== 'None' && assinaturaId !== '')) {
             seriesOpt.style.display = 'block';
             singleOpt.style.display = 'none';
 
-            // Re-render buttons for cleaner logic inside the block
-            seriesOpt.innerHTML = `
-                <p style="font-size: 0.9rem; margin: 0 0 10px 0; color: var(--text-muted);">Esta despesa faz parte de uma série parcelada.</p>
-                <button class="btn-danger" style="width: 100%; margin-bottom: 5px;" onclick="submitDeleteSeries('${groupId}')">Excluir TODAS as parcelas</button>
-                <button class="btn-ghost" style="width: 100%; font-size: 0.85rem;" onclick="submitDeleteSingle('${id}')">Excluir apenas ESTA</button>
-                <button class="btn-ghost" style="width: 100%; margin-top: 5px;" onclick="closeModal()">Cancelar</button>
-            `;
+            let html = '';
+
+            if (assinaturaId && assinaturaId !== 'None' && assinaturaId !== '') {
+                // Subscription Mode
+                html = `
+                    <p style="font-size: 0.9rem; margin: 0 0 10px 0; color: var(--text-muted);">Esta despesa é uma assinatura mensal.</p>
+                    <button class="btn-danger" style="width: 100%; margin-bottom: 5px;" onclick="submitCancelSubscription('${assinaturaId}')">Cancelar Assinatura (Parar Futuros)</button>
+                    <button class="btn-ghost" style="width: 100%; font-size: 0.85rem;" onclick="submitDeleteSingle('${id}')">Excluir apenas ESTA (este mês)</button>
+                    <button class="btn-ghost" style="width: 100%; margin-top: 5px;" onclick="closeModal()">Cancelar</button>
+                `;
+            } else {
+                // Installment Mode
+                html = `
+                    <p style="font-size: 0.9rem; margin: 0 0 10px 0; color: var(--text-muted);">Esta despesa faz parte de uma série parcelada.</p>
+                    <button class="btn-danger" style="width: 100%; margin-bottom: 5px;" onclick="submitDeleteSeries('${groupId}')">Excluir TODAS as parcelas</button>
+                    <button class="btn-ghost" style="width: 100%; font-size: 0.85rem;" onclick="submitDeleteSingle('${id}')">Excluir apenas ESTA</button>
+                    <button class="btn-ghost" style="width: 100%; margin-top: 5px;" onclick="closeModal()">Cancelar</button>
+                `;
+            }
+            seriesOpt.innerHTML = html;
+
         } else {
             seriesOpt.style.display = 'none';
             singleOpt.style.display = 'flex';
         }
 
-        modal.showModal(); // Actually show the modal
+        modal.showModal();
 
         // Polyfill for non-supporting browsers if needed, or just standard
         if (!modal.showModal) {
@@ -598,6 +632,27 @@
         form.action = `/deletar/${targetId}`;
 
         // Add current view context
+        const mesInput = document.createElement('input');
+        mesInput.type = 'hidden';
+        mesInput.name = 'current_mes';
+        mesInput.value = '{{ current_mes }}';
+        form.appendChild(mesInput);
+
+        const anoInput = document.createElement('input');
+        anoInput.type = 'hidden';
+        anoInput.name = 'current_ano';
+        anoInput.value = '{{ current_ano }}';
+        form.appendChild(anoInput);
+
+        document.body.appendChild(form);
+        form.submit();
+    }
+
+    function submitCancelSubscription(assId) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/cancelar_assinatura/${assId}`;
+
         const mesInput = document.createElement('input');
         mesInput.type = 'hidden';
         mesInput.name = 'current_mes';

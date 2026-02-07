@@ -68,6 +68,22 @@ def init_db():
                 except sqlite3.OperationalError:
                     pass # Column likely exists
 
+                try:
+                    conn.execute("ALTER TABLE gastos ADD COLUMN assinatura_id INTEGER")
+                except sqlite3.OperationalError:
+                    pass # Column likely exists
+
+                conn.execute('''
+                    CREATE TABLE IF NOT EXISTS assinaturas (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        descricao TEXT NOT NULL,
+                        valor REAL NOT NULL,
+                        categoria TEXT NOT NULL,
+                        data_inicio DATE NOT NULL,
+                        ativo BOOLEAN DEFAULT 1
+                    )
+                ''')
+
                 conn.execute('''
                     CREATE TABLE IF NOT EXISTS renda (
                         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -87,6 +103,59 @@ def init_db():
     except Exception as e:
         logger.error(f"Erro ao inicializar banco de dados: {e}")
 
+def verificar_assinaturas(conn, mes: int, ano: int):
+    """
+    Checks active subscriptions and generates expenses for the given month if missing.
+    """
+    try:
+        # Get start and end of the target month
+        # Actually we just need to know if an expense exists for this assinatura_id in this month
+        target_date_str = f"{ano}-{mes:02d}-01"
+        target_month_prefix = f"{ano}-{mes:02d}"
+
+        # Fetch active subscriptions
+        assinaturas = conn.execute("SELECT * FROM assinaturas WHERE ativo = 1").fetchall()
+
+        for ass in assinaturas:
+            # Parse start date of subscription
+            data_inicio = datetime.strptime(ass['data_inicio'], '%Y-%m-%d').date()
+            target_date_obj = datetime(ano, mes, 1).date()
+
+            # Don't generate if the target month is before the subscription started
+            # We compare Year-Month.
+            if target_date_obj < data_inicio.replace(day=1):
+                continue
+
+            # Check if expense exists for this subscription in this month
+            exists = conn.execute(
+                "SELECT 1 FROM gastos WHERE assinatura_id = ? AND strftime('%Y-%m', data) = ?",
+                (ass['id'], target_month_prefix)
+            ).fetchone()
+
+            if not exists:
+                # Create the expense
+                # We use the same day of month as data_inicio, or clamp to valid day
+                day = data_inicio.day
+                # Handle edge cases (e.g. starting on 31st, target month has 30 days)
+                # dateutil handles this well usually, or we just stick to 1st or 'day'
+                try:
+                    new_date = datetime(ano, mes, day)
+                except ValueError:
+                    # Fallback to last day of month if day is invalid (e.g. Feb 30)
+                    next_month = target_date_obj + relativedelta(months=1)
+                    new_date = next_month - relativedelta(days=1)
+
+                new_date_str = new_date.strftime('%Y-%m-%d')
+
+                conn.execute(
+                    "INSERT INTO gastos (descricao, valor, categoria, data, assinatura_id) VALUES (?, ?, ?, ?, ?)",
+                    (ass['descricao'], ass['valor'], ass['categoria'], new_date_str, ass['id'])
+                )
+                conn.commit()
+
+    except Exception as e:
+        logger.error(f"Erro ao verificar assinaturas: {e}")
+
 # Inicializa o banco ao iniciar
 init_db()
 
@@ -101,6 +170,9 @@ async def home(request: Request, mes: Optional[int] = Query(None), ano: Optional
         target_month_str = f"{current_ano}-{current_mes:02d}"
 
         with closing(get_db_connection()) as conn:
+            # Verify and generate recurring expenses first
+            verificar_assinaturas(conn, current_mes, current_ano)
+
             # Filter by month
             gastos = conn.execute(
                 "SELECT * FROM gastos WHERE strftime('%Y-%m', data) = ? ORDER BY data DESC, id DESC",
@@ -205,6 +277,7 @@ async def adicionar(
     categoria: str = Form(...),
     data: str = Form(...),
     parcelas: int = Form(1),
+    is_fixo: bool = Form(False),
     current_mes: int = Form(None),
     current_ano: int = Form(None)
 ):
@@ -212,32 +285,34 @@ async def adicionar(
         # Parse the provided date
         start_date = datetime.strptime(data, '%Y-%m-%d').date()
 
-        # Installment logic
-        # If parcelas > 1, the value is usually per installment. Or total?
-        # Usually "buy something for 300 in 3x" means 3 payments of 100.
-        # Or "buy something for 100 in 3x" means 3 payments of 33.33.
-        # The prompt says "algo parcelado que corra nos meses".
-        # Standard credit card behavior: Input total purchase price, divide by installments?
-        # Or input monthly installment value?
-        # Given the form asks "Valor", users might enter the installment value (e.g., "R$ 50,00" for "3x of 50").
-        # Let's assume the user enters the INSTALLMENT value. "I'm paying 50 per month".
-        # This is simpler and less prone to rounding errors for the user view.
-        # If they enter total, they can divide it themselves.
-        # So: Value = Installment Value.
-
         agrupamento_id = str(uuid.uuid4())
 
         with closing(get_db_connection()) as conn:
             with conn:
-                for i in range(parcelas):
-                    # Calculate date: Start Date + i months
-                    future_date = start_date + relativedelta(months=i)
-                    date_str = future_date.strftime('%Y-%m-%d')
-
-                    conn.execute(
-                        "INSERT INTO gastos (descricao, valor, categoria, data, parcela_atual, total_parcelas, agrupamento_id) VALUES (?, ?, ?, ?, ?, ?, ?)",
-                        (descricao, valor, categoria, date_str, i + 1, parcelas, agrupamento_id)
+                if is_fixo:
+                    # Create Subscription Record
+                    cursor = conn.execute(
+                        "INSERT INTO assinaturas (descricao, valor, categoria, data_inicio, ativo) VALUES (?, ?, ?, ?, 1)",
+                        (descricao, valor, categoria, data)
                     )
+                    assinatura_id = cursor.lastrowid
+
+                    # Create the first expense instance
+                    conn.execute(
+                        "INSERT INTO gastos (descricao, valor, categoria, data, assinatura_id) VALUES (?, ?, ?, ?, ?)",
+                        (descricao, valor, categoria, data, assinatura_id)
+                    )
+                else:
+                    # Standard / Installment Logic
+                    for i in range(parcelas):
+                        # Calculate date: Start Date + i months
+                        future_date = start_date + relativedelta(months=i)
+                        date_str = future_date.strftime('%Y-%m-%d')
+
+                        conn.execute(
+                            "INSERT INTO gastos (descricao, valor, categoria, data, parcela_atual, total_parcelas, agrupamento_id) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                            (descricao, valor, categoria, date_str, i + 1, parcelas, agrupamento_id)
+                        )
 
         url = "/"
         if current_mes and current_ano:
@@ -284,6 +359,35 @@ async def deletar_serie(
     except Exception as e:
         logger.error(f"Erro ao deletar série: {e}")
         raise HTTPException(status_code=500, detail="Erro ao deletar série de despesas")
+
+@app.post("/cancelar_assinatura/{assinatura_id}")
+async def cancelar_assinatura(
+    assinatura_id: int,
+    current_mes: int = Form(None),
+    current_ano: int = Form(None)
+):
+    try:
+        with closing(get_db_connection()) as conn:
+            with conn:
+                # Disable subscription
+                conn.execute("UPDATE assinaturas SET ativo = 0 WHERE id = ?", (assinatura_id,))
+                # Ideally, we might want to delete future generated expenses if any,
+                # but our lazy generation means they probably don't exist yet unless the user visited future months.
+                # To be safe and clean, let's delete any expenses linked to this subscription
+                # that are in the future relative to the current view?
+                # Or just let them be? The user asked to "cancel", which usually means "stop future charges".
+                # If I delete "This Month's" subscription instance, I usually just click delete on the item.
+                # If I click "Cancel Subscription", I probably mean "Stop generating new ones".
+                # Let's just disable the subscription. Existing generated history remains.
+                pass
+
+        url = "/"
+        if current_mes and current_ano:
+            url = f"/?mes={current_mes}&ano={current_ano}"
+        return RedirectResponse(url=url, status_code=303)
+    except Exception as e:
+        logger.error(f"Erro ao cancelar assinatura: {e}")
+        raise HTTPException(status_code=500, detail="Erro ao cancelar assinatura")
 
 if __name__ == "__main__":
     # Roda no servidor local, porta 8000
