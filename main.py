@@ -1,76 +1,99 @@
-from fastapi import FastAPI, Request, Form
+from fastapi import FastAPI, Request, Form, HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 import sqlite3
 import uvicorn
+import logging
+from contextlib import closing
 
-app = FastAPI()
+# Configuração de Logs
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+app = FastAPI(title="Meu Controle Financeiro")
+
+# Montando arquivos estáticos (se houver CSS/JS externos)
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # Configurando templates
 templates = Jinja2Templates(directory="templates")
 
-# Função para conectar ao banco (cria se não existir)
+DATABASE = 'financeiro.db'
+
 def get_db_connection():
-    conn = sqlite3.connect('financeiro.db')
-    conn.row_factory = sqlite3.Row
-    return conn
+    try:
+        conn = sqlite3.connect(DATABASE)
+        conn.row_factory = sqlite3.Row
+        return conn
+    except sqlite3.Error as e:
+        logger.error(f"Erro ao conectar ao banco de dados: {e}")
+        raise HTTPException(status_code=500, detail="Erro interno do servidor")
 
-# Inicializa a tabela
 def init_db():
-    conn = get_db_connection()
-    conn.execute('''
-        CREATE TABLE IF NOT EXISTS gastos (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            descricao TEXT NOT NULL,
-            valor REAL NOT NULL,
-            categoria TEXT NOT NULL,
-            data DATE DEFAULT (date('now'))
-        )
-    ''')
-    conn.commit()
-    conn.close()
+    try:
+        with closing(get_db_connection()) as conn:
+            with conn:
+                conn.execute('''
+                    CREATE TABLE IF NOT EXISTS gastos (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        descricao TEXT NOT NULL,
+                        valor REAL NOT NULL,
+                        categoria TEXT NOT NULL,
+                        data DATE DEFAULT (date('now'))
+                    )
+                ''')
+    except Exception as e:
+        logger.error(f"Erro ao inicializar banco de dados: {e}")
 
+# Inicializa o banco ao iniciar
 init_db()
 
 @app.get("/", response_class=HTMLResponse)
 async def home(request: Request):
-    conn = get_db_connection()
-    gastos = conn.execute("SELECT * FROM gastos ORDER BY id DESC").fetchall()
-    
-    # Prepara dados para o gráfico
-    categorias_db = conn.execute("SELECT categoria, SUM(valor) as total FROM gastos GROUP BY categoria").fetchall()
-    conn.close()
+    try:
+        with closing(get_db_connection()) as conn:
+            # Selects don't need transaction context, but closing is important
+            gastos = conn.execute("SELECT * FROM gastos ORDER BY id DESC").fetchall()
+            categorias_db = conn.execute("SELECT categoria, SUM(valor) as total FROM gastos GROUP BY categoria").fetchall()
 
-    # Formata dados para o JavaScript do gráfico
-    labels = [row['categoria'] for row in categorias_db]
-    data = [row['total'] for row in categorias_db]
-    total_geral = sum(data)
+        labels = [row['categoria'] for row in categorias_db]
+        data = [row['total'] for row in categorias_db]
+        total_geral = sum(data)
 
-    return templates.TemplateResponse("index.html", {
-        "request": request, 
-        "gastos": gastos,
-        "labels": labels,
-        "data": data,
-        "total_geral": total_geral
-    })
+        return templates.TemplateResponse("index.html", {
+            "request": request,
+            "gastos": gastos,
+            "labels": labels,
+            "data": data,
+            "total_geral": total_geral
+        })
+    except Exception as e:
+        logger.error(f"Erro na home: {e}")
+        return HTMLResponse(content="<h1>Erro interno</h1>", status_code=500)
 
 @app.post("/adicionar")
 async def adicionar(descricao: str = Form(...), valor: float = Form(...), categoria: str = Form(...)):
-    conn = get_db_connection()
-    conn.execute("INSERT INTO gastos (descricao, valor, categoria) VALUES (?, ?, ?)", 
-                 (descricao, valor, categoria))
-    conn.commit()
-    conn.close()
-    return RedirectResponse(url="/", status_code=303)
+    try:
+        with closing(get_db_connection()) as conn:
+            with conn:
+                conn.execute("INSERT INTO gastos (descricao, valor, categoria) VALUES (?, ?, ?)",
+                             (descricao, valor, categoria))
+        return RedirectResponse(url="/", status_code=303)
+    except Exception as e:
+        logger.error(f"Erro ao adicionar: {e}")
+        raise HTTPException(status_code=500, detail="Erro ao adicionar despesa")
 
 @app.post("/deletar/{id}")
 async def deletar(id: int):
-    conn = get_db_connection()
-    conn.execute("DELETE FROM gastos WHERE id = ?", (id,))
-    conn.commit()
-    conn.close()
-    return RedirectResponse(url="/", status_code=303)
+    try:
+        with closing(get_db_connection()) as conn:
+            with conn:
+                conn.execute("DELETE FROM gastos WHERE id = ?", (id,))
+        return RedirectResponse(url="/", status_code=303)
+    except Exception as e:
+        logger.error(f"Erro ao deletar: {e}")
+        raise HTTPException(status_code=500, detail="Erro ao deletar despesa")
 
 if __name__ == "__main__":
     # Roda no servidor local, porta 8000
