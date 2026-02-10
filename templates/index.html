@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meu Controle Financeiro</title>
+    <link rel="icon" type="image/png" href="/static/logo.png">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Google Fonts: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+    <style>
+        :root {
+            --primary: #3b82f6;       /* Soft Blue */
+            --bg-body: #f8fafc;       /* Very Light Slate */
+            --bg-card: #ffffff;
+            --text-main: #334155;     /* Slate 700 */
+            --text-muted: #94a3b8;    /* Slate 400 */
+            --border: #e2e8f0;        /* Slate 200 */
+            --danger: #ef4444;
+            --success: #10b981;
+            --radius: 12px;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Dark Mode */
+        body.dark-mode {
+            --primary: #60a5fa;
+            --bg-body: #0f172a;
+            --bg-card: #1e293b;
+            --text-main: #f1f5f9;
+            --text-muted: #94a3b8;
+            --border: #334155;
+        }
+
+        /* Layout */
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem;
+        }
+
+        /* Header - Minimalist */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 2rem;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        /* Navigation - Transparent & Clean */
+        .month-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .month-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        .btn-icon {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 1.1rem;
+            padding: 0.5rem;
+            border-radius: 50%;
+            transition: all 0.2s;
+        }
+
+        .btn-icon:hover {
+            color: var(--primary);
+            background-color: var(--bg-card); /* subtle highlight */
+        }
+
+        /* Grid Layout */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        /* Cards - Minimalist */
+        .card {
+            background: var(--bg-card);
+            padding: 1.5rem;
+            border-radius: var(--radius);
+            /* Very subtle border instead of shadow for clean look */
+            border: 1px solid var(--border);
+        }
+
+        /* Balance Stats */
+        .stat-label {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-main);
+            margin: 0.25rem 0;
+        }
+
+        .stat-sub {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        /* Income Edit - Clean */
+        .income-wrapper {
+            display: flex;
+            align-items: baseline;
+            gap: 0.5rem;
+        }
+
+        .btn-edit-income {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            cursor: pointer;
+            background: none;
+            border: none;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .income-wrapper:hover .btn-edit-income {
+            opacity: 1;
+        }
+
+        .income-form {
+            display: none; /* Hidden by default */
+            margin-top: 0.5rem;
+        }
+
+        .income-form.active {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        /* Form Controls - Clean */
+        input, select {
+            background-color: var(--bg-body);
+            border: 1px solid var(--border);
+            padding: 0.6rem 1rem;
+            border-radius: 8px;
+            font-family: inherit;
+            color: var(--text-main);
+            width: 100%;
+            box-sizing: border-box;
+            transition: border-color 0.2s;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .btn-primary {
+            background-color: var(--text-main); /* Black/Dark Grey button for minimalism */
+            color: var(--bg-card);
+            border: none;
+            padding: 0.6rem 1.2rem;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .btn-primary:hover {
+            opacity: 0.9;
+        }
+
+        body.dark-mode .btn-primary {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        /* Table - Clean */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        th {
+            text-align: left;
+            padding: 1rem 0.5rem;
+            color: var(--text-muted);
+            font-weight: 600;
+            font-size: 0.85rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        td {
+            padding: 1rem 0.5rem;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.95rem;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        .cat-tag {
+            display: inline-block;
+            padding: 0.2rem 0.6rem;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            background-color: var(--bg-body);
+            color: var(--text-muted);
+        }
+
+        /* Modal (Dialog) */
+        dialog {
+            border: none;
+            border-radius: var(--radius);
+            padding: 2rem;
+            background: var(--bg-card);
+            color: var(--text-main);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            max-width: 400px;
+        }
+
+        dialog::backdrop {
+            background: rgba(0,0,0,0.5);
+        }
+
+        .dialog-buttons {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1.5rem;
+            justify-content: flex-end;
+        }
+
+        .btn-danger {
+            background-color: #fee2e2;
+            color: var(--danger);
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .btn-danger:hover {
+            background-color: #fecaca;
+        }
+
+        .btn-ghost {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+        }
+
+        .installment-badge {
+            font-size: 0.7rem;
+            background-color: var(--bg-body);
+            color: var(--text-muted);
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin-left: 6px;
+            border: 1px solid var(--border);
+        }
+
+        /* Hide spinners */
+        input[type=number]::-webkit-inner-spin-button,
+        input[type=number]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        input[type=number] {
+            -moz-appearance: textfield;
+        }
+
+        /* Income List Styling */
+        .income-list {
+            margin-top: 10px;
+            font-size: 0.9rem;
+            border-top: 1px solid var(--border);
+            padding-top: 10px;
+        }
+        .income-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 4px 0;
+            border-bottom: 1px dashed var(--border);
+        }
+        .income-item:last-child {
+            border-bottom: none;
+        }
+        .income-item span {
+            color: var(--text-muted);
+        }
+        .btn-del-income {
+            background: none;
+            border: none;
+            color: var(--danger);
+            cursor: pointer;
+            font-size: 0.8rem;
+            opacity: 0.6;
+        }
+        .btn-del-income:hover {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1><i class="fas fa-wallet" style="color: var(--primary);"></i> Finanças</h1>
+        <button class="btn-icon" onclick="toggleDarkMode()" title="Alternar Tema">
+            <i id="theme-icon" class="fas fa-moon"></i>
+        </button>
+    </header>
+
+    <!-- Navigation -->
+    <div class="month-nav">
+        <a href="/?mes={{ prev_mes }}&ano={{ prev_ano }}" class="btn-icon"><i class="fas fa-chevron-left"></i></a>
+        <div class="month-title">{{ mes_nome }} {{ current_ano }}</div>
+        <a href="/?mes={{ next_mes }}&ano={{ next_ano }}" class="btn-icon"><i class="fas fa-chevron-right"></i></a>
+    </div>
+
+    <!-- Stats Grid -->
+    <div class="grid">
+        <!-- Income -->
+        <div class="card">
+            <div class="stat-label">Renda Mensal (Total)</div>
+            <div class="income-wrapper">
+                <div class="stat-value" style="color: var(--success);">R$ {{ "%.2f"|format(renda_mensal) }}</div>
+                <button class="btn-edit-income" onclick="toggleIncomeForm()" title="Gerenciar Renda"><i class="fas fa-plus-circle"></i></button>
+            </div>
+
+            <!-- Hidden section to Add Income -->
+            <form action="/adicionar_renda" method="post" class="income-form" id="incomeForm" style="flex-direction: column;">
+                <div style="display: flex; gap: 5px;">
+                    <input type="text" name="descricao" placeholder="Fonte (ex: Salário)" required style="flex: 1;">
+                    <input type="number" step="0.01" name="valor" placeholder="R$" min="0" required style="width: 80px;">
+                </div>
+                <input type="hidden" name="current_mes" value="{{ current_mes }}">
+                <input type="hidden" name="current_ano" value="{{ current_ano }}">
+                <button type="submit" class="btn-primary" style="padding: 0.4rem; font-size: 0.8rem; width: 100%;">Adicionar Fonte</button>
+            </form>
+
+            <!-- List of Incomes -->
+            {% if rendas %}
+            <div class="income-list">
+                {% for renda in rendas %}
+                <div class="income-item">
+                    <span>{{ renda.descricao or "Renda" }}</span>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <span style="color: var(--text-main); font-weight: 500;">R$ {{ "%.2f"|format(renda.valor) }}</span>
+                        <form action="/deletar_renda/{{ renda.id }}" method="post" style="display: inline;">
+                            <input type="hidden" name="current_mes" value="{{ current_mes }}">
+                            <input type="hidden" name="current_ano" value="{{ current_ano }}">
+                            <button type="submit" class="btn-del-income" title="Remover">&times;</button>
+                        </form>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Expense -->
+        <div class="card">
+            <div class="stat-label">Total Gasto</div>
+            <div class="stat-value" style="color: var(--danger);">R$ {{ "%.2f"|format(total_geral) }}</div>
+            <div class="stat-sub">{{ gastos|length }} despesas este mês</div>
+        </div>
+
+        <!-- Balance -->
+        <div class="card">
+            <div class="stat-label">Saldo Estimado</div>
+            <div class="stat-value" style="color: {% if saldo_estimado >= 0 %}var(--success){% else %}var(--danger){% endif %};">
+                R$ {{ "%.2f"|format(saldo_estimado) }}
+            </div>
+            <div class="stat-sub">
+                {% if saldo_estimado >= 0 %}Sobrando{% else %}Faltando{% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Chart -->
+    <div class="card" style="margin-bottom: 2rem;">
+        <div style="height: 200px; position: relative;">
+            <canvas id="expensesChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Main Content: Add Form & List -->
+    <div class="grid" style="grid-template-columns: 1fr 2fr; align-items: start;">
+
+        <!-- Add Form -->
+        <div class="card">
+            <h3 style="margin-top: 0; font-size: 1rem; color: var(--text-main);">Nova Despesa</h3>
+            <form action="/adicionar" method="post" style="display: flex; flex-direction: column; gap: 1rem;">
+                <input type="date" name="data" value="{{ default_date }}" required style="color: var(--text-main);">
+                <input type="text" name="descricao" placeholder="Descrição" required>
+                <select name="categoria">
+                    <option value="Outros">Categoria...</option>
+                    <option value="Casa">Casa</option>
+                    <option value="Alimentação">Alimentação</option>
+                    <option value="Transporte">Transporte</option>
+                    <option value="Lazer">Lazer</option>
+                    <option value="Saúde">Saúde</option>
+                    <option value="Outros">Outros</option>
+                </select>
+                <div style="display: flex; gap: 0.5rem;">
+                    <input type="number" step="0.01" name="valor" placeholder="R$ Valor" min="0" required style="flex: 2;">
+                    <input type="number" id="inputParcelas" name="parcelas" placeholder="x1" min="1" value="1" title="Parcelas" style="flex: 1;">
+                </div>
+                <div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; color: var(--text-main);">
+                    <input type="checkbox" id="checkFixo" name="is_fixo" value="true" onchange="toggleParcelas()">
+                    <label for="checkFixo" style="cursor: pointer;">Fixo / Assinatura Mensal</label>
+                </div>
+                <input type="hidden" name="current_mes" value="{{ current_mes }}">
+                <input type="hidden" name="current_ano" value="{{ current_ano }}">
+                <button type="submit" class="btn-primary">Adicionar</button>
+            </form>
+        </div>
+
+        <!-- Expense List -->
+        <div class="card" style="min-height: 300px;">
+            <table style="margin-top: 0;">
+                <thead>
+                    <tr>
+                        <th>Descrição</th>
+                        <th>Categoria</th>
+                        <th>Valor</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for gasto in gastos %}
+                    <tr>
+                        <td>
+                            {{ gasto.descricao }}
+                            {% if gasto.total_parcelas > 1 %}
+                            <span class="installment-badge">{{ gasto.parcela_atual }}/{{ gasto.total_parcelas }}</span>
+                            {% endif %}
+                            {% if gasto.assinatura_id %}
+                            <i class="fas fa-sync-alt" style="font-size: 0.7rem; color: var(--primary); margin-left: 5px;" title="Assinatura Mensal"></i>
+                            {% endif %}
+                            <div style="font-size: 0.75rem; color: var(--text-muted);">{{ gasto.data }}</div>
+                        </td>
+                        <td><span class="cat-tag">{{ gasto.categoria }}</span></td>
+                        <td style="font-weight: 600;">R$ {{ "%.2f"|format(gasto.valor) }}</td>
+                        <td style="text-align: right;">
+                            <button class="btn-icon" style="color: var(--text-muted); font-size: 0.9rem;"
+                                    onclick="confirmDelete('{{ gasto.id }}', '{{ gasto.agrupamento_id }}', {{ gasto.total_parcelas }}, '{{ gasto.descricao }}', '{{ gasto.assinatura_id }}')">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="4" style="text-align: center; padding: 2rem; color: var(--text-muted);">
+                            Sem despesas este mês.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Modal -->
+<dialog id="deleteModal">
+    <h3 style="margin-top: 0;">Excluir Despesa</h3>
+    <p>Deseja excluir <b id="delDesc"></b>?</p>
+
+    <div id="seriesOption" style="display: none; background-color: var(--bg-body); padding: 10px; border-radius: 8px; margin-bottom: 10px;">
+        <p id="seriesText" style="font-size: 0.9rem; margin: 0 0 10px 0; color: var(--text-muted);">Esta despesa faz parte de uma série.</p>
+        <button id="btnDeleteAll" class="btn-danger" style="width: 100%; margin-bottom: 5px;" onclick="submitDeleteSeries()">Excluir TODAS</button>
+        <button class="btn-ghost" style="width: 100%; font-size: 0.85rem;" onclick="submitDeleteSingle()">Excluir apenas ESTA</button>
+    </div>
+
+    <div class="dialog-buttons" id="singleOption">
+        <button class="btn-ghost" onclick="closeModal()">Cancelar</button>
+        <button class="btn-danger" onclick="submitDeleteSingle()">Excluir</button>
+    </div>
+</dialog>
+
+<!-- Hidden Forms for Delete -->
+<form id="formDeleteSingle" action="" method="post">
+    <input type="hidden" name="current_mes" value="{{ current_mes }}">
+    <input type="hidden" name="current_ano" value="{{ current_ano }}">
+</form>
+
+<form id="formDeleteSeries" action="" method="post">
+    <input type="hidden" name="current_mes" value="{{ current_mes }}">
+    <input type="hidden" name="current_ano" value="{{ current_ano }}">
+</form>
+
+<script>
+    function toggleParcelas() {
+        const isFixo = document.getElementById('checkFixo').checked;
+        const inputParcelas = document.getElementById('inputParcelas');
+        if (isFixo) {
+            inputParcelas.value = 1;
+            inputParcelas.disabled = true;
+        } else {
+            inputParcelas.disabled = false;
+        }
+    }
+    // --- Dark Mode ---
+    function toggleDarkMode() {
+        document.body.classList.toggle('dark-mode');
+        const isDark = document.body.classList.contains('dark-mode');
+        localStorage.setItem('darkMode', isDark);
+        updateIcon();
+        updateChartTheme();
+    }
+
+    function updateIcon() {
+        const isDark = document.body.classList.contains('dark-mode');
+        const icon = document.getElementById('theme-icon');
+        icon.className = isDark ? 'fas fa-sun' : 'fas fa-moon';
+    }
+
+    if (localStorage.getItem('darkMode') === 'true') {
+        document.body.classList.add('dark-mode');
+    }
+    updateIcon();
+
+    // --- Income Toggle ---
+    function toggleIncomeForm() {
+        document.getElementById('incomeForm').classList.toggle('active');
+    }
+
+    // --- Delete Logic ---
+    const modal = document.getElementById('deleteModal');
+    let currentId = null;
+    let currentGroupId = null;
+    let currentAssinaturaId = null;
+
+    function confirmDelete(id, groupId, totalParcelas, descricao, assinaturaId) {
+        currentId = id;
+        currentGroupId = groupId;
+        currentAssinaturaId = assinaturaId;
+        document.getElementById('delDesc').innerText = descricao;
+
+        const seriesOpt = document.getElementById('seriesOption');
+        const singleOpt = document.getElementById('singleOption');
+
+        // Check if it is Installment OR Subscription
+        if ((totalParcelas > 1 && groupId && groupId !== 'None') || (assinaturaId && assinaturaId !== 'None' && assinaturaId !== '')) {
+            seriesOpt.style.display = 'block';
+            singleOpt.style.display = 'none';
+
+            let html = '';
+
+            if (assinaturaId && assinaturaId !== 'None' && assinaturaId !== '') {
+                // Subscription Mode
+                html = `
+                    <p style="font-size: 0.9rem; margin: 0 0 10px 0; color: var(--text-muted);">Esta despesa é uma assinatura mensal.</p>
+                    <button class="btn-danger" style="width: 100%; margin-bottom: 5px;" onclick="submitCancelSubscription('${assinaturaId}')">Cancelar Assinatura (Parar Futuros)</button>
+                    <button class="btn-ghost" style="width: 100%; font-size: 0.85rem;" onclick="submitDeleteSingle('${id}')">Excluir apenas ESTA (este mês)</button>
+                    <button class="btn-ghost" style="width: 100%; margin-top: 5px;" onclick="closeModal()">Cancelar</button>
+                `;
+            } else {
+                // Installment Mode
+                html = `
+                    <p style="font-size: 0.9rem; margin: 0 0 10px 0; color: var(--text-muted);">Esta despesa faz parte de uma série parcelada.</p>
+                    <button class="btn-danger" style="width: 100%; margin-bottom: 5px;" onclick="submitDeleteSeries('${groupId}')">Excluir TODAS as parcelas</button>
+                    <button class="btn-ghost" style="width: 100%; font-size: 0.85rem;" onclick="submitDeleteSingle('${id}')">Excluir apenas ESTA</button>
+                    <button class="btn-ghost" style="width: 100%; margin-top: 5px;" onclick="closeModal()">Cancelar</button>
+                `;
+            }
+            seriesOpt.innerHTML = html;
+
+        } else {
+            seriesOpt.style.display = 'none';
+            singleOpt.style.display = 'flex';
+        }
+
+        modal.showModal();
+
+        // Polyfill for non-supporting browsers if needed, or just standard
+        if (!modal.showModal) {
+             modal.setAttribute('open', 'true');
+        }
+    }
+
+    function closeModal() {
+        modal.close();
+    }
+
+    function submitDeleteSingle(id) {
+        const targetId = id || currentId;
+        if (!targetId) return;
+
+        // Create a form dynamically to submit POST request
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/deletar/${targetId}`;
+
+        // Add current view context
+        const mesInput = document.createElement('input');
+        mesInput.type = 'hidden';
+        mesInput.name = 'current_mes';
+        mesInput.value = '{{ current_mes }}';
+        form.appendChild(mesInput);
+
+        const anoInput = document.createElement('input');
+        anoInput.type = 'hidden';
+        anoInput.name = 'current_ano';
+        anoInput.value = '{{ current_ano }}';
+        form.appendChild(anoInput);
+
+        document.body.appendChild(form);
+        form.submit();
+    }
+
+    function submitCancelSubscription(assId) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/cancelar_assinatura/${assId}`;
+
+        const mesInput = document.createElement('input');
+        mesInput.type = 'hidden';
+        mesInput.name = 'current_mes';
+        mesInput.value = '{{ current_mes }}';
+        form.appendChild(mesInput);
+
+        const anoInput = document.createElement('input');
+        anoInput.type = 'hidden';
+        anoInput.name = 'current_ano';
+        anoInput.value = '{{ current_ano }}';
+        form.appendChild(anoInput);
+
+        document.body.appendChild(form);
+        form.submit();
+    }
+
+    function submitDeleteSeries(groupId) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/deletar_serie/${groupId}`;
+
+        const mesInput = document.createElement('input');
+        mesInput.type = 'hidden';
+        mesInput.name = 'current_mes';
+        mesInput.value = '{{ current_mes }}';
+        form.appendChild(mesInput);
+
+        const anoInput = document.createElement('input');
+        anoInput.type = 'hidden';
+        anoInput.name = 'current_ano';
+        anoInput.value = '{{ current_ano }}';
+        form.appendChild(anoInput);
+
+        document.body.appendChild(form);
+        form.submit();
+    }
+
+    // --- Chart ---
+    const ctx = document.getElementById('expensesChart').getContext('2d');
+    const colors = {
+        'Casa': '#3b82f6', 'Alimentação': '#10b981', 'Transporte': '#f59e0b',
+        'Lazer': '#a855f7', 'Saúde': '#ef4444', 'Outros': '#64748b'
+    };
+
+    const labels = {{ labels | tojson }};
+    const data = {{ data | tojson }};
+    const bgColors = labels.map(l => colors[l] || colors['Outros']);
+
+    let chart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: labels,
+            datasets: [{
+                data: data,
+                backgroundColor: bgColors,
+                borderWidth: 0,
+                hoverOffset: 10
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: '75%',
+            plugins: {
+                legend: {
+                    position: 'right',
+                    labels: {
+                        boxWidth: 8,
+                        font: { family: "'Inter', sans-serif", size: 11 },
+                        usePointStyle: true
+                    }
+                }
+            }
+        }
+    });
+
+    function updateChartTheme() {
+        // Minimalist chart doesn't need much border update, but legend color matters
+        const isDark = document.body.classList.contains('dark-mode');
+        if (chart) {
+            chart.options.plugins.legend.labels.color = isDark ? '#f1f5f9' : '#334155';
+            chart.update();
+        }
+    }
+    updateChartTheme();
+</script>
+
+</body>
+</html>
